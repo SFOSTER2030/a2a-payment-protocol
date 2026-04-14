@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 500" width="900" height="500" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+    <marker id="layerArrow" viewBox="0 0 10 7" refX="5" refY="7" markerWidth="10" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 0, 5 7" fill="#9ca3af"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="500" fill="#f8f9fa"/>
+
+  <!-- ============ Layer 1: PULSE API GATEWAY (dark) ============ -->
+  <rect x="40" y="20" width="820" height="120" rx="8" fill="#1a1a2e" filter="url(#shadow)"/>
+  <text x="450" y="52" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff">PULSE API GATEWAY</text>
+  <text x="450" y="74" text-anchor="middle" font-size="12" fill="#ffffff" opacity="0.85">30 routes  &#183;  SHA-256 auth  &#183;  21 permissions</text>
+
+  <!-- Stats chips inside gateway -->
+  <rect x="120" y="92" width="180" height="30" rx="6" fill="rgba(255,255,255,0.08)"/>
+  <text x="210" y="112" text-anchor="middle" font-size="11" fill="#0A9E8F" font-weight="600">/pulse-api/* routing</text>
+
+  <rect x="360" y="92" width="180" height="30" rx="6" fill="rgba(255,255,255,0.08)"/>
+  <text x="450" y="112" text-anchor="middle" font-size="11" fill="#0A9E8F" font-weight="600">Rate limiting</text>
+
+  <rect x="600" y="92" width="180" height="30" rx="6" fill="rgba(255,255,255,0.08)"/>
+  <text x="690" y="112" text-anchor="middle" font-size="11" fill="#0A9E8F" font-weight="600">Webhook dispatch</text>
+
+  <!-- Downward arrows -->
+  <line x1="250" y1="140" x2="250" y2="170" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+  <line x1="450" y1="140" x2="450" y2="170" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+  <line x1="650" y1="140" x2="650" y2="170" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+
+  <!-- ============ Layer 2: PAYMENT AGENT LAYER (white) ============ -->
+  <rect x="40" y="176" width="820" height="160" rx="8" fill="#ffffff" stroke="#1a1a2e" stroke-width="1" filter="url(#shadow)"/>
+  <text x="450" y="204" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a2e">PAYMENT AGENT LAYER</text>
+
+  <!-- Agent card 1: Transaction Authorizer -->
+  <rect x="72" y="220" width="230" height="96" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="187" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">Transaction Authorizer</text>
+  <line x1="102" y1="258" x2="272" y2="258" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="187" y="278" text-anchor="middle" font-size="11" fill="#ccfbf1">10-step auth pipeline</text>
+  <text x="187" y="296" text-anchor="middle" font-size="11" fill="#ccfbf1">Policy + risk scoring</text>
+
+  <!-- Agent card 2: Settlement Executor -->
+  <rect x="335" y="220" width="230" height="96" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="450" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">Settlement Executor</text>
+  <line x1="365" y1="258" x2="535" y2="258" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="450" y="278" text-anchor="middle" font-size="11" fill="#ccfbf1">Wallet transfers + escrow</text>
+  <text x="450" y="296" text-anchor="middle" font-size="11" fill="#ccfbf1">Hold, release, refund</text>
+
+  <!-- Agent card 3: Reconciliation Auditor -->
+  <rect x="598" y="220" width="230" height="96" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="713" y="248" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">Reconciliation Auditor</text>
+  <line x1="628" y1="258" x2="798" y2="258" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <text x="713" y="278" text-anchor="middle" font-size="11" fill="#ccfbf1">Anomaly detection</text>
+  <text x="713" y="296" text-anchor="middle" font-size="11" fill="#ccfbf1">90-day rolling baseline</text>
+
+  <!-- Downward arrows -->
+  <line x1="250" y1="336" x2="250" y2="366" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+  <line x1="450" y1="336" x2="450" y2="366" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+  <line x1="650" y1="336" x2="650" y2="366" stroke="#9ca3af" stroke-width="2" marker-end="url(#layerArrow)"/>
+
+  <!-- ============ Layer 3: CORE PLATFORM (light gray) ============ -->
+  <rect x="40" y="372" width="820" height="110" rx="8" fill="#e5e7eb" filter="url(#shadow)"/>
+  <text x="450" y="400" text-anchor="middle" font-size="18" font-weight="700" fill="#1a1a2e">CORE PLATFORM</text>
+  <text x="450" y="420" text-anchor="middle" font-size="12" fill="#4b5563">45 agents  &#183;  93 connectors  &#183;  21 verticals</text>
+
+  <!-- Sub-items -->
+  <rect x="100" y="436" width="180" height="32" rx="6" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="190" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="#1a1a2e">Agent Wallets</text>
+
+  <rect x="320" y="436" width="180" height="32" rx="6" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="410" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="#1a1a2e">Event Bus</text>
+
+  <rect x="540" y="436" width="220" height="32" rx="6" fill="#ffffff" filter="url(#shadow)"/>
+  <text x="650" y="457" text-anchor="middle" font-size="11" font-weight="600" fill="#1a1a2e">Immutable Audit Ledger</text>
+</svg>

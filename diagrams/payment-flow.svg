@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280" width="900" height="280" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrowTeal" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#0A9E8F"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="280" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="450" y="28" text-anchor="middle" fill="#1a1a2e" font-size="16" font-weight="700">Payment Flow</text>
+  <text x="450" y="46" text-anchor="middle" fill="#6b7280" font-size="11">Request  &gt;  Authorize  &gt;  Settle  &gt;  Reconcile</text>
+
+  <!-- Any Agent card (gray) -->
+  <rect x="20" y="75" width="145" height="60" rx="8" fill="#6b7280" filter="url(#shadow)"/>
+  <text x="92" y="102" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="600">Any Agent</text>
+  <text x="92" y="119" text-anchor="middle" fill="#d1d5db" font-size="10">initiator</text>
+
+  <!-- Arrow 1: payment_request -->
+  <line x1="165" y1="105" x2="228" y2="105" stroke="#0A9E8F" stroke-width="2" marker-end="url(#arrowTeal)"/>
+  <text x="196" y="95" text-anchor="middle" fill="#1a1a2e" font-size="9.5" font-style="italic">payment_request</text>
+
+  <!-- Transaction Authorizer card (teal) -->
+  <rect x="232" y="75" width="170" height="60" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="317" y="100" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Transaction</text>
+  <text x="317" y="116" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Authorizer</text>
+
+  <!-- Arrow 2: transaction_approved -->
+  <line x1="402" y1="105" x2="468" y2="105" stroke="#0A9E8F" stroke-width="2" marker-end="url(#arrowTeal)"/>
+  <text x="435" y="95" text-anchor="middle" fill="#1a1a2e" font-size="9.5" font-style="italic">transaction_approved</text>
+
+  <!-- Settlement Executor card (teal) -->
+  <rect x="472" y="75" width="170" height="60" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="557" y="100" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Settlement</text>
+  <text x="557" y="116" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Executor</text>
+
+  <!-- Arrow 3: settlement_event -->
+  <line x1="642" y1="105" x2="708" y2="105" stroke="#0A9E8F" stroke-width="2" marker-end="url(#arrowTeal)"/>
+  <text x="675" y="95" text-anchor="middle" fill="#1a1a2e" font-size="9.5" font-style="italic">settlement_event</text>
+
+  <!-- Reconciliation Auditor card (teal) -->
+  <rect x="712" y="75" width="170" height="60" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="797" y="100" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Reconciliation</text>
+  <text x="797" y="116" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600">Auditor</text>
+
+  <!-- Dashed connector down from Authorizer to DENIED -->
+  <line x1="317" y1="135" x2="317" y2="190" stroke="#dc2626" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowRed)"/>
+
+  <!-- DENIED card (red) -->
+  <rect x="247" y="194" width="140" height="52" rx="8" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="317" y="217" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">DENIED</text>
+  <text x="317" y="234" text-anchor="middle" fill="#fecaca" font-size="10">auth_rejected</text>
+</svg>

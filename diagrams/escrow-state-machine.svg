@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrowGreen" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
+    </marker>
+    <marker id="arrowAmber" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#d97706"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+    <marker id="arrowGray" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="450" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="400" y="28" text-anchor="middle" fill="#1a1a2e" font-size="16" font-weight="700">Escrow State Machine</text>
+
+  <!-- HELD state (teal) - top center -->
+  <rect x="310" y="48" width="180" height="64" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="400" y="74" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="700">HELD</text>
+  <text x="400" y="94" text-anchor="middle" fill="#ccfbf1" font-size="11">Funds locked, awaiting release</text>
+
+  <!-- Left path: HELD -> RELEASED -->
+  <path d="M 330 112 C 200 160, 140 170, 140 195" fill="none" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <text x="195" y="158" fill="#059669" font-size="10.5" font-weight="500">conditions met</text>
+
+  <!-- Center path: HELD -> EXPIRED -> REFUNDED -->
+  <line x1="400" y1="112" x2="400" y2="195" stroke="#d97706" stroke-width="2" marker-end="url(#arrowAmber)"/>
+  <text x="435" y="158" fill="#d97706" font-size="10.5" font-weight="500">TTL exceeded</text>
+
+  <!-- Right path: HELD -> DISPUTED -->
+  <path d="M 470 112 C 600 160, 660 170, 660 195" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrowRed)"/>
+  <text x="600" y="158" fill="#dc2626" font-size="10.5" font-weight="500">dispute raised</text>
+
+  <!-- RELEASED state (green) -->
+  <rect x="50" y="200" width="180" height="64" rx="8" fill="#059669" filter="url(#shadow)"/>
+  <text x="140" y="226" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">RELEASED</text>
+  <text x="140" y="246" text-anchor="middle" fill="#d1fae5" font-size="11">Payee wallet credited</text>
+
+  <!-- EXPIRED -> REFUNDED state (amber) -->
+  <rect x="310" y="200" width="180" height="64" rx="8" fill="#d97706" filter="url(#shadow)"/>
+  <text x="400" y="220" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">EXPIRED</text>
+  <text x="400" y="236" text-anchor="middle" fill="#fef3c7" font-size="11">&#8595;</text>
+  <text x="400" y="252" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="700">REFUNDED</text>
+
+  <!-- DISPUTED state (red) -->
+  <rect x="570" y="200" width="180" height="64" rx="8" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="660" y="226" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="700">DISPUTED</text>
+  <text x="660" y="246" text-anchor="middle" fill="#fecaca" font-size="11">Active dispute in progress</text>
+
+  <!-- Arrow: DISPUTED -> FROZEN -->
+  <line x1="660" y1="264" x2="660" y2="310" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowGray)"/>
+
+  <!-- FROZEN state (dark gray) -->
+  <rect x="570" y="314" width="180" height="52" rx="8" fill="#4b5563" filter="url(#shadow)"/>
+  <text x="660" y="337" text-anchor="middle" fill="#ffffff" font-size="14" font-weight="700">FROZEN</text>
+  <text x="660" y="354" text-anchor="middle" fill="#d1d5db" font-size="10">Clock paused, funds locked</text>
+
+  <!-- Arrow: FROZEN -> Human Resolution -->
+  <line x1="660" y1="366" x2="660" y2="394" stroke="#6b7280" stroke-width="2" marker-end="url(#arrowGray)"/>
+
+  <!-- Human Resolution box -->
+  <rect x="560" y="398" width="200" height="40" rx="8" fill="#ffffff" stroke="#1a1a2e" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="660" y="423" text-anchor="middle" fill="#1a1a2e" font-size="12" font-weight="600">Human Resolution</text>
+
+  <!-- Terminal state labels -->
+  <text x="140" y="282" text-anchor="middle" fill="#059669" font-size="9" font-weight="500">TERMINAL</text>
+  <text x="400" y="282" text-anchor="middle" fill="#d97706" font-size="9" font-weight="500">TERMINAL</text>
+</svg>

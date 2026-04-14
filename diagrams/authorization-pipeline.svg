@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" width="600" height="900" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="116%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrDown" viewBox="0 0 10 7" refX="5" refY="7" markerWidth="10" markerHeight="7" orient="auto">
+      <polygon points="0 0, 10 0, 5 7" fill="#0A9E8F"/>
+    </marker>
+    <marker id="arrRight" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="10" markerHeight="7" orient="auto-start-auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="600" height="900" fill="#f8f9fa"/>
+
+  <!-- Title -->
+  <text x="200" y="26" text-anchor="middle" fill="#1a1a2e" font-size="15" font-weight="700">Authorization Pipeline</text>
+  <text x="200" y="42" text-anchor="middle" fill="#6b7280" font-size="10">10 steps, 4 decision gates</text>
+
+  <!-- Step 1 -->
+  <rect x="90" y="56" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="78" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">1. Receive Payment Request</text>
+  <line x1="200" y1="90" x2="200" y2="100" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 2 -->
+  <rect x="90" y="102" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="124" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">2. Validate Schema &amp; Fields</text>
+  <line x1="200" y1="136" x2="200" y2="146" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 3 -->
+  <rect x="90" y="148" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="170" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">3. Verify Agent Identity</text>
+  <line x1="200" y1="182" x2="200" y2="192" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 4 -->
+  <rect x="90" y="194" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="216" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">4. Check Agent Permissions</text>
+  <line x1="200" y1="228" x2="200" y2="240" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 5 - Decision: Counterparty -->
+  <polygon points="200,242 280,278 200,314 120,278" fill="#ffffff" stroke="#0A9E8F" stroke-width="2" filter="url(#shadow)"/>
+  <text x="200" y="274" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">5. Counterparty</text>
+  <text x="200" y="288" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">Approved?</text>
+  <!-- DENY right -->
+  <line x1="280" y1="278" x2="360" y2="278" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrRight)"/>
+  <rect x="364" y="264" width="150" height="28" rx="6" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="439" y="283" text-anchor="middle" font-size="10" font-weight="600" fill="#ffffff">COUNTERPARTY_BLOCKED</text>
+  <line x1="200" y1="314" x2="200" y2="326" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 6 -->
+  <rect x="90" y="328" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="350" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">6. Evaluate Spending Policy</text>
+  <line x1="200" y1="362" x2="200" y2="374" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 7 - Decision: Balance -->
+  <polygon points="200,376 280,412 200,448 120,412" fill="#ffffff" stroke="#0A9E8F" stroke-width="2" filter="url(#shadow)"/>
+  <text x="200" y="408" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">7. Balance</text>
+  <text x="200" y="422" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">Sufficient?</text>
+  <!-- DENY right -->
+  <line x1="280" y1="412" x2="360" y2="412" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrRight)"/>
+  <rect x="364" y="398" width="150" height="28" rx="6" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="439" y="417" text-anchor="middle" font-size="10" font-weight="600" fill="#ffffff">INSUFFICIENT_FUNDS</text>
+  <line x1="200" y1="448" x2="200" y2="460" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 8 - Decision: Human Threshold -->
+  <polygon points="200,462 280,498 200,534 120,498" fill="#ffffff" stroke="#0A9E8F" stroke-width="2" filter="url(#shadow)"/>
+  <text x="200" y="494" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">8. Human</text>
+  <text x="200" y="508" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">Threshold?</text>
+  <!-- DENY right -->
+  <line x1="280" y1="498" x2="360" y2="498" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrRight)"/>
+  <rect x="364" y="484" width="150" height="28" rx="6" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="439" y="503" text-anchor="middle" font-size="10" font-weight="600" fill="#ffffff">HUMAN_REJECTED</text>
+  <line x1="200" y1="534" x2="200" y2="546" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 9 - Decision: Compliance -->
+  <polygon points="200,548 280,584 200,620 120,584" fill="#ffffff" stroke="#0A9E8F" stroke-width="2" filter="url(#shadow)"/>
+  <text x="200" y="580" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">9. Compliance</text>
+  <text x="200" y="594" text-anchor="middle" font-size="10" font-weight="600" fill="#1a1a2e">Check?</text>
+  <!-- DENY right -->
+  <line x1="280" y1="584" x2="360" y2="584" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrRight)"/>
+  <rect x="364" y="570" width="150" height="28" rx="6" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="439" y="589" text-anchor="middle" font-size="10" font-weight="600" fill="#ffffff">COMPLIANCE_FAILED</text>
+  <line x1="200" y1="620" x2="200" y2="632" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- Step 10 -->
+  <rect x="90" y="634" width="220" height="34" rx="8" fill="#0A9E8F" filter="url(#shadow)"/>
+  <text x="200" y="656" text-anchor="middle" font-size="11" font-weight="600" fill="#ffffff">10. Record Authorization</text>
+  <line x1="200" y1="668" x2="200" y2="690" stroke="#0A9E8F" stroke-width="1.5"/>
+
+  <!-- AUTHORIZED (green terminal) -->
+  <rect x="125" y="694" width="150" height="48" rx="24" fill="#059669" filter="url(#shadow)"/>
+  <text x="200" y="724" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">AUTHORIZED</text>
+
+  <!-- DENIED summary (red terminal) -->
+  <rect x="364" y="694" width="150" height="48" rx="24" fill="#dc2626" filter="url(#shadow)"/>
+  <text x="439" y="724" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">DENIED</text>
+
+  <!-- Dashed vertical connecting deny boxes to terminal DENIED -->
+  <line x1="439" y1="292" x2="439" y2="694" stroke="#fecaca" stroke-width="1" stroke-dasharray="4,3"/>
+</svg>

@@ -1,0 +1,35 @@
+{
+  "name": "@tfsfventures/a2a-payments",
+  "version": "1.7.0",
+  "description": "TypeScript SDK for the Pulse Payments A2A (Agent-to-Agent) payment network",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "a2a",
+    "payments",
+    "pulse",
+    "agent-to-agent",
+    "fintech",
+    "sdk"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}

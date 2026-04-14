@@ -1,0 +1,2360 @@
+openapi: 3.1.0
+info:
+  title: Pulse AI — A2A Payment Protocol API
+  version: "1.7.0"
+  description: |
+    Agent-to-Agent (A2A) Payment Protocol for the Pulse AI platform.
+    Provides secure, auditable payment orchestration between autonomous agents
+    with built-in escrow, authorization pipelines, and real-time reconciliation.
+  contact:
+    name: TFSF Ventures Support
+    email: support@tfsfventures.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: https://{your-instance}.pulse-internal/api
+    description: "Internal API — not publicly accessible. Routes shown for architectural reference only."
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Agent or user JWT issued by the Pulse identity service.
+
+  schemas:
+    PaymentRequest:
+      type: object
+      required: [amount, currency, sender_agent_id, receiver_agent_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          description: Payment amount in the specified currency.
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+          example: USD
+        sender_agent_id:
+          type: string
+          format: uuid
+        receiver_agent_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          additionalProperties: true
+        idempotency_key:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    PaymentTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_request_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, authorized, settled, failed, reversed]
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        sender_agent_id:
+          type: string
+          format: uuid
+        receiver_agent_id:
+          type: string
+          format: uuid
+        authorization_id:
+          type: string
+          format: uuid
+        settlement_reference:
+          type: string
+        settled_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PaymentAuthorization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transaction_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [approved, denied, pending_review]
+        policy_checks:
+          type: array
+          items:
+            type: object
+            properties:
+              check_name:
+                type: string
+              passed:
+                type: boolean
+              reason:
+                type: string
+        risk_score:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 100
+        authorized_by:
+          type: string
+        authorized_at:
+          type: string
+          format: date-time
+
+    PaymentEscrow:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transaction_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [held, released, refunded, disputed, frozen]
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        held_at:
+          type: string
+          format: date-time
+        release_conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              condition_type:
+                type: string
+              status:
+                type: string
+                enum: [met, unmet, waived]
+        expires_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+
+    PaymentEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - payment.requested
+            - payment.authorized
+            - payment.denied
+            - payment.settled
+            - payment.failed
+            - escrow.held
+            - escrow.released
+            - escrow.disputed
+        payload:
+          type: object
+          additionalProperties: true
+        agent_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        sequence_number:
+          type: integer
+          format: int64
+
+    SpendingPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        max_single_transaction:
+          type: number
+          format: double
+        max_daily_spend:
+          type: number
+          format: double
+        max_monthly_spend:
+          type: number
+          format: double
+        allowed_receiver_agents:
+          type: array
+          items:
+            type: string
+            format: uuid
+        blocked_categories:
+          type: array
+          items:
+            type: string
+        require_human_approval_above:
+          type: number
+          format: double
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AgentWallet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        balance:
+          type: number
+          format: double
+        currency:
+          type: string
+        held_balance:
+          type: number
+          format: double
+          description: Amount currently held in escrow.
+        available_balance:
+          type: number
+          format: double
+          readOnly: true
+        daily_spent:
+          type: number
+          format: double
+        monthly_spent:
+          type: number
+          format: double
+        last_transaction_at:
+          type: string
+          format: date-time
+
+    ReconciliationReport:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        total_transactions:
+          type: integer
+        total_settled:
+          type: number
+          format: double
+        total_refunded:
+          type: number
+          format: double
+        total_disputed:
+          type: number
+          format: double
+        discrepancies:
+          type: array
+          items:
+            type: object
+            properties:
+              transaction_id:
+                type: string
+                format: uuid
+              expected_amount:
+                type: number
+                format: double
+              actual_amount:
+                type: number
+                format: double
+              reason:
+                type: string
+        status:
+          type: string
+          enum: [clean, discrepancies_found, pending_review]
+        generated_at:
+          type: string
+          format: date-time
+
+    WebhookEndpoint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+          writeOnly: true
+        active:
+          type: boolean
+          default: true
+        failure_count:
+          type: integer
+          default: 0
+        last_triggered_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: object
+              additionalProperties: true
+            request_id:
+              type: string
+              format: uuid
+
+    DisputeRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        transaction_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [open, responded, escalated, arbitrated, resolved, timed_out]
+        category:
+          type: string
+          enum: [unauthorized, service_not_rendered, quality_issue, duplicate, other]
+        reason:
+          type: string
+        filed_by:
+          type: string
+          format: uuid
+        filed_at:
+          type: string
+          format: date-time
+        response_text:
+          type: string
+        responded_at:
+          type: string
+          format: date-time
+        decision:
+          type: string
+          enum: [sender_wins, receiver_wins, split, pending]
+        refund_amount:
+          type: number
+          format: double
+        resolution_deadline:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        evidence:
+          $ref: "#/components/schemas/DisputeEvidence"
+
+    DisputeEvidence:
+      type: object
+      properties:
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              description:
+                type: string
+              uploaded_at:
+                type: string
+                format: date-time
+        notes:
+          type: string
+          maxLength: 5000
+
+    ChargebackRequest:
+      type: object
+      required: [reason_code, amount]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        transaction_id:
+          type: string
+          format: uuid
+        reason_code:
+          type: string
+          enum: [fraud, not_received, not_as_described, duplicate, other]
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        status:
+          type: string
+          enum: [initiated, under_review, accepted, rejected, reversed]
+          readOnly: true
+        description:
+          type: string
+          maxLength: 1000
+        evidence:
+          $ref: "#/components/schemas/DisputeEvidence"
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    RefundRequest:
+      type: object
+      required: [amount]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        transaction_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        reason:
+          type: string
+          maxLength: 500
+        partial:
+          type: boolean
+          default: false
+        status:
+          type: string
+          enum: [pending, processed, failed]
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Memo:
+      type: object
+      required: [subject, body]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        transaction_id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          maxLength: 200
+        body:
+          type: string
+          maxLength: 5000
+        category:
+          type: string
+          enum: [adjustment, note, compliance, escalation]
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    BatchSettlement:
+      type: object
+      required: [transaction_ids]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        transaction_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 500
+        status:
+          type: string
+          enum: [pending, processing, completed, partially_failed]
+          readOnly: true
+        total_amount:
+          type: number
+          format: double
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        succeeded_count:
+          type: integer
+          readOnly: true
+        failed_count:
+          type: integer
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    FeePolicy:
+      type: object
+      required: [name, fee_type, rate]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        fee_type:
+          type: string
+          enum: [percentage, flat, tiered]
+        rate:
+          type: number
+          format: double
+          minimum: 0
+          description: Percentage rate (0-100) for percentage type, flat amount for flat type.
+        flat_amount:
+          type: number
+          format: double
+          minimum: 0
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        min_fee:
+          type: number
+          format: double
+        max_fee:
+          type: number
+          format: double
+        applies_to:
+          type: string
+          enum: [all_transactions, escrow_only, cross_agent, intra_agent]
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Hold:
+      type: object
+      required: [agent_id, amount, currency, reason]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        agent_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        currency:
+          type: string
+          pattern: "^[A-Z]{3}$"
+        reason:
+          type: string
+          maxLength: 500
+        status:
+          type: string
+          enum: [active, released, expired]
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        released_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    Statement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        opening_balance:
+          type: number
+          format: double
+        closing_balance:
+          type: number
+          format: double
+        total_debits:
+          type: number
+          format: double
+        total_credits:
+          type: number
+          format: double
+        transaction_count:
+          type: integer
+        currency:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+
+    ComplianceExport:
+      type: object
+      required: [period_start, period_end, export_type]
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        export_type:
+          type: string
+          enum: [transactions, disputes, chargebacks, full_audit]
+        agent_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          readOnly: true
+        download_url:
+          type: string
+          format: uri
+          readOnly: true
+        requested_at:
+          type: string
+          format: date-time
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+
+    AnalyticsResponse:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        granularity:
+          type: string
+          enum: [hourly, daily, weekly, monthly]
+        summary:
+          type: object
+          properties:
+            total_transactions:
+              type: integer
+            total_volume:
+              type: number
+              format: double
+            average_transaction_size:
+              type: number
+              format: double
+            success_rate:
+              type: number
+              format: double
+            dispute_rate:
+              type: number
+              format: double
+            average_settlement_time_ms:
+              type: integer
+        time_series:
+          type: array
+          items:
+            type: object
+            properties:
+              period:
+                type: string
+                format: date-time
+              transaction_count:
+                type: integer
+              volume:
+                type: number
+                format: double
+              success_count:
+                type: integer
+              failure_count:
+                type: integer
+
+    PaginatedResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            per_page:
+              type: integer
+            total_items:
+              type: integer
+            total_pages:
+              type: integer
+            has_next:
+              type: boolean
+            has_prev:
+              type: boolean
+
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+        minimum: 1
+    PerPageParam:
+      name: per_page
+      in: query
+      schema:
+        type: integer
+        default: 25
+        minimum: 1
+        maximum: 100
+    AgentIdParam:
+      name: agent_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+paths:
+  # ───────────────────────────── Payment Routes (15) ─────────────────────────────
+
+  /pulse-api/v1/payments/request:
+    post:
+      operationId: createPaymentRequest
+      summary: Create a new payment request
+      tags: [Payments]
+      x-required-scopes: [payments:create]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentRequest"
+      responses:
+        "201":
+          description: Payment request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/request/{request_id}:
+    get:
+      operationId: getPaymentRequest
+      summary: Retrieve a payment request by ID
+      tags: [Payments]
+      x-required-scopes: [payments:read]
+      parameters:
+        - name: request_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Payment request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentRequest"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/authorize:
+    post:
+      operationId: authorizePayment
+      summary: Submit a payment for authorization pipeline
+      tags: [Payments]
+      x-required-scopes: [payments:authorize]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_request_id]
+              properties:
+                payment_request_id:
+                  type: string
+                  format: uuid
+                override_policies:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "200":
+          description: Authorization result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentAuthorization"
+        "403":
+          description: Authorization denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentAuthorization"
+
+  /pulse-api/v1/payments/authorize/{authorization_id}:
+    get:
+      operationId: getAuthorization
+      summary: Retrieve authorization details
+      tags: [Payments]
+      x-required-scopes: [payments:read]
+      parameters:
+        - name: authorization_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Authorization details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentAuthorization"
+
+  /pulse-api/v1/payments/settle:
+    post:
+      operationId: settlePayment
+      summary: Execute settlement for an authorized payment
+      tags: [Payments]
+      x-required-scopes: [payments:settle]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [authorization_id]
+              properties:
+                authorization_id:
+                  type: string
+                  format: uuid
+                settlement_note:
+                  type: string
+      responses:
+        "200":
+          description: Settlement executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentTransaction"
+
+  /pulse-api/v1/payments/transactions:
+    get:
+      operationId: listTransactions
+      summary: List payment transactions with filters
+      tags: [Payments]
+      x-required-scopes: [payments:read]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, authorized, settled, failed, reversed]
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated transaction list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PaymentTransaction"
+
+  /pulse-api/v1/payments/transactions/{transaction_id}:
+    get:
+      operationId: getTransaction
+      summary: Retrieve a single transaction
+      tags: [Payments]
+      x-required-scopes: [payments:read]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Transaction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentTransaction"
+
+  /pulse-api/v1/payments/reverse/{transaction_id}:
+    post:
+      operationId: reversePayment
+      summary: Reverse a settled payment
+      tags: [Payments]
+      x-required-scopes: [payments:reverse]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Reversal initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentTransaction"
+
+  /pulse-api/v1/payments/escrow:
+    post:
+      operationId: createEscrow
+      summary: Place funds in escrow for a transaction
+      tags: [Payments]
+      x-required-scopes: [payments:escrow]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [transaction_id, release_conditions]
+              properties:
+                transaction_id:
+                  type: string
+                  format: uuid
+                release_conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      condition_type:
+                        type: string
+                      parameters:
+                        type: object
+                expires_in_hours:
+                  type: integer
+                  default: 72
+      responses:
+        "201":
+          description: Escrow created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentEscrow"
+
+  /pulse-api/v1/payments/escrow/{escrow_id}:
+    get:
+      operationId: getEscrow
+      summary: Retrieve escrow status
+      tags: [Payments]
+      x-required-scopes: [payments:read]
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Escrow details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentEscrow"
+
+  /pulse-api/v1/payments/escrow/{escrow_id}/release:
+    post:
+      operationId: releaseEscrow
+      summary: Release funds from escrow to receiver
+      tags: [Payments]
+      x-required-scopes: [payments:escrow]
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Escrow released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentEscrow"
+
+  /pulse-api/v1/payments/escrow/{escrow_id}/dispute:
+    post:
+      operationId: disputeEscrow
+      summary: Raise a dispute on escrowed funds
+      tags: [Payments]
+      x-required-scopes: [payments:escrow]
+      parameters:
+        - name: escrow_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                evidence:
+                  type: array
+                  items:
+                    type: string
+                    format: uri
+      responses:
+        "200":
+          description: Dispute raised
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentEscrow"
+
+  /pulse-api/v1/payments/policies:
+    get:
+      operationId: listSpendingPolicies
+      summary: List spending policies for an agent
+      tags: [Payments]
+      x-required-scopes: [payments:policy:read]
+      parameters:
+        - name: agent_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Spending policies list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SpendingPolicy"
+    post:
+      operationId: createSpendingPolicy
+      summary: Create a new spending policy
+      tags: [Payments]
+      x-required-scopes: [payments:policy:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpendingPolicy"
+      responses:
+        "201":
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpendingPolicy"
+
+  /pulse-api/v1/payments/policies/{policy_id}:
+    put:
+      operationId: updateSpendingPolicy
+      summary: Update an existing spending policy
+      tags: [Payments]
+      x-required-scopes: [payments:policy:write]
+      parameters:
+        - name: policy_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpendingPolicy"
+      responses:
+        "200":
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpendingPolicy"
+
+  # ───────────────────────────── Platform Routes (15) ─────────────────────────────
+
+  /pulse-api/v1/agents/{agent_id}/wallet:
+    get:
+      operationId: getAgentWallet
+      summary: Retrieve wallet balance and spend metrics
+      tags: [Platform]
+      x-required-scopes: [platform:wallet:read]
+      parameters:
+        - $ref: "#/components/parameters/AgentIdParam"
+      responses:
+        "200":
+          description: Wallet details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWallet"
+
+  /pulse-api/v1/agents/{agent_id}/wallet/fund:
+    post:
+      operationId: fundAgentWallet
+      summary: Add funds to an agent wallet
+      tags: [Platform]
+      x-required-scopes: [platform:wallet:write]
+      parameters:
+        - $ref: "#/components/parameters/AgentIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency]
+              properties:
+                amount:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                currency:
+                  type: string
+                source_reference:
+                  type: string
+      responses:
+        "200":
+          description: Wallet funded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWallet"
+
+  /pulse-api/v1/agents/{agent_id}/wallet/withdraw:
+    post:
+      operationId: withdrawAgentWallet
+      summary: Withdraw funds from an agent wallet
+      tags: [Platform]
+      x-required-scopes: [platform:wallet:write]
+      parameters:
+        - $ref: "#/components/parameters/AgentIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, currency, destination]
+              properties:
+                amount:
+                  type: number
+                  format: double
+                currency:
+                  type: string
+                destination:
+                  type: string
+      responses:
+        "200":
+          description: Withdrawal processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentWallet"
+
+  /pulse-api/v1/reconciliation/reports:
+    get:
+      operationId: listReconciliationReports
+      summary: List reconciliation reports
+      tags: [Platform]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [clean, discrepancies_found, pending_review]
+      responses:
+        "200":
+          description: Paginated report list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/ReconciliationReport"
+    post:
+      operationId: generateReconciliationReport
+      summary: Trigger a new reconciliation report
+      tags: [Platform]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [period_start, period_end]
+              properties:
+                period_start:
+                  type: string
+                  format: date-time
+                period_end:
+                  type: string
+                  format: date-time
+                agent_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        "202":
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconciliationReport"
+
+  /pulse-api/v1/reconciliation/reports/{report_id}:
+    get:
+      operationId: getReconciliationReport
+      summary: Retrieve a specific reconciliation report
+      tags: [Platform]
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconciliationReport"
+
+  /pulse-api/v1/webhooks:
+    get:
+      operationId: listWebhooks
+      summary: List registered webhook endpoints
+      tags: [Platform]
+      responses:
+        "200":
+          description: Webhook endpoints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/WebhookEndpoint"
+    post:
+      operationId: createWebhook
+      summary: Register a new webhook endpoint
+      tags: [Platform]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpoint"
+      responses:
+        "201":
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+
+  /pulse-api/v1/webhooks/{webhook_id}:
+    put:
+      operationId: updateWebhook
+      summary: Update a webhook endpoint
+      tags: [Platform]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookEndpoint"
+      responses:
+        "200":
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpoint"
+    delete:
+      operationId: deleteWebhook
+      summary: Remove a webhook endpoint
+      tags: [Platform]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Webhook deleted
+
+  /pulse-api/v1/webhooks/{webhook_id}/test:
+    post:
+      operationId: testWebhook
+      summary: Send a test event to a webhook endpoint
+      tags: [Platform]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_type:
+                  type: string
+      responses:
+        "200":
+          description: Test event sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  delivered:
+                    type: boolean
+                  response_code:
+                    type: integer
+                  latency_ms:
+                    type: integer
+
+  /pulse-api/v1/events:
+    get:
+      operationId: listPaymentEvents
+      summary: List payment events (audit log)
+      tags: [Platform]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated event list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PaymentEvent"
+
+  /pulse-api/v1/events/{event_id}:
+    get:
+      operationId: getPaymentEvent
+      summary: Retrieve a single payment event
+      tags: [Platform]
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentEvent"
+
+  /pulse-api/v1/health:
+    get:
+      operationId: healthCheck
+      summary: Service health and readiness check
+      tags: [Platform]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                  version:
+                    type: string
+                  uptime_seconds:
+                    type: integer
+                  services:
+                    type: object
+                    properties:
+                      database:
+                        type: string
+                      cache:
+                        type: string
+                      message_bus:
+                        type: string
+
+  /pulse-api/v1/agents/{agent_id}/permissions:
+    get:
+      operationId: getAgentPermissions
+      summary: Retrieve payment permission scopes for an agent
+      tags: [Platform]
+      parameters:
+        - $ref: "#/components/parameters/AgentIdParam"
+      responses:
+        "200":
+          description: Agent permissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agent_id:
+                    type: string
+                    format: uuid
+                  scopes:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - payments:create
+                        - payments:read
+                        - payments:authorize
+                        - payments:settle
+                        - payments:reverse
+                        - payments:escrow
+                        - payments:policy:read
+                        - payments:policy:write
+                        - platform:wallet:read
+
+  # ───────────────────────────── Dispute Routes (5) ─────────────────────────────
+
+  /pulse-api/v1/payments/{transaction_id}/dispute:
+    post:
+      operationId: fileDispute
+      summary: File a dispute against a payment transaction
+      tags: [Disputes]
+      x-required-scopes: [disputes:create]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason, evidence]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 1000
+                category:
+                  type: string
+                  enum: [unauthorized, service_not_rendered, quality_issue, duplicate, other]
+                evidence:
+                  $ref: "#/components/schemas/DisputeEvidence"
+      responses:
+        "201":
+          description: Dispute filed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisputeRecord"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Dispute already exists for this transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    get:
+      operationId: getDispute
+      summary: Retrieve dispute details for a transaction
+      tags: [Disputes]
+      x-required-scopes: [disputes:read]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dispute details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisputeRecord"
+        "404":
+          description: No dispute found for this transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/{transaction_id}/dispute/respond:
+    post:
+      operationId: respondToDispute
+      summary: Submit a response to a dispute from the counterparty
+      tags: [Disputes]
+      x-required-scopes: [disputes:respond]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response_text]
+              properties:
+                response_text:
+                  type: string
+                  maxLength: 2000
+                evidence:
+                  $ref: "#/components/schemas/DisputeEvidence"
+                accept_liability:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Response recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisputeRecord"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/{transaction_id}/dispute/arbitrate:
+    post:
+      operationId: arbitrateDispute
+      summary: Submit an arbitration decision on a dispute
+      tags: [Disputes]
+      x-required-scopes: [disputes:arbitrate]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision, rationale]
+              properties:
+                decision:
+                  type: string
+                  enum: [sender_wins, receiver_wins, split]
+                rationale:
+                  type: string
+                  maxLength: 2000
+                refund_amount:
+                  type: number
+                  format: double
+                  minimum: 0
+      responses:
+        "200":
+          description: Arbitration decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DisputeRecord"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/disputes:
+    get:
+      operationId: listDisputes
+      summary: List all disputes with filters
+      tags: [Disputes]
+      x-required-scopes: [disputes:read]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, responded, escalated, arbitrated, resolved, timed_out]
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated dispute list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/DisputeRecord"
+
+  # ───────────────────────────── Chargeback & Refund Routes (4) ─────────────────────────────
+
+  /pulse-api/v1/payments/{transaction_id}/chargeback:
+    post:
+      operationId: initiateChargeback
+      summary: Initiate a chargeback on a settled payment
+      tags: [Chargebacks]
+      x-required-scopes: [chargebacks:create]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChargebackRequest"
+      responses:
+        "201":
+          description: Chargeback initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChargebackRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Chargeback already exists for this transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/{transaction_id}/chargeback/respond:
+    post:
+      operationId: respondToChargeback
+      summary: Submit a response to a chargeback from the receiver
+      tags: [Chargebacks]
+      x-required-scopes: [chargebacks:respond]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response_text]
+              properties:
+                response_text:
+                  type: string
+                  maxLength: 2000
+                evidence:
+                  $ref: "#/components/schemas/DisputeEvidence"
+                accept_chargeback:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Chargeback response recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChargebackRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/{transaction_id}/refund:
+    post:
+      operationId: refundPayment
+      summary: Issue a full or partial refund on a settled payment
+      tags: [Chargebacks]
+      x-required-scopes: [payments:refund]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefundRequest"
+      responses:
+        "201":
+          description: Refund issued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefundRequest"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/memos:
+    post:
+      operationId: createMemo
+      summary: Create an internal memo attached to a transaction or agent
+      tags: [Chargebacks]
+      x-required-scopes: [memos:create]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Memo"
+      responses:
+        "201":
+          description: Memo created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Memo"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ───────────────────────────── Settlement Operations Routes (6) ─────────────────────────────
+
+  /pulse-api/v1/payments/{transaction_id}/capture:
+    post:
+      operationId: capturePayment
+      summary: Capture a pre-authorized payment for settlement
+      tags: [Settlements]
+      x-required-scopes: [payments:capture]
+      parameters:
+        - name: transaction_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                capture_amount:
+                  type: number
+                  format: double
+                  minimum: 0.01
+                  description: Amount to capture. Defaults to the full authorized amount if omitted.
+                settlement_note:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Payment captured
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentTransaction"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/settlements/batch:
+    post:
+      operationId: createBatchSettlement
+      summary: Submit a batch of transactions for settlement in a single operation
+      tags: [Settlements]
+      x-required-scopes: [payments:settle]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchSettlement"
+      responses:
+        "202":
+          description: Batch settlement accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchSettlement"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/payments/dead-letter:
+    get:
+      operationId: listDeadLetterItems
+      summary: List payment events in the dead-letter queue
+      tags: [Settlements]
+      x-required-scopes: [platform:dead_letter:read]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: event_type
+          in: query
+          schema:
+            type: string
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated dead-letter list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/PaymentEvent"
+
+  /pulse-api/v1/payments/dead-letter/{id}/resolve:
+    post:
+      operationId: resolveDeadLetterItem
+      summary: Resolve or retry a dead-letter queue item
+      tags: [Settlements]
+      x-required-scopes: [platform:dead_letter:write]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [retry, discard, escalate]
+                note:
+                  type: string
+                  maxLength: 500
+      responses:
+        "200":
+          description: Dead-letter item resolved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  action_taken:
+                    type: string
+                  resolved_at:
+                    type: string
+                    format: date-time
+        "404":
+          description: Dead-letter item not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/holds:
+    post:
+      operationId: createHold
+      summary: Place a temporary hold on agent wallet funds
+      tags: [Settlements]
+      x-required-scopes: [platform:holds:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Hold"
+      responses:
+        "201":
+          description: Hold placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hold"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/holds/{hold_id}:
+    delete:
+      operationId: releaseHold
+      summary: Release a previously placed hold on wallet funds
+      tags: [Settlements]
+      x-required-scopes: [platform:holds:write]
+      parameters:
+        - name: hold_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Hold released
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hold"
+        "404":
+          description: Hold not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ───────────────────────────── Reporting Routes (3) ─────────────────────────────
+
+  /pulse-api/v1/statements:
+    get:
+      operationId: listStatements
+      summary: List agent account statements
+      tags: [Reporting]
+      x-required-scopes: [reporting:read]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: agent_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: period_start
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: period_end
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Paginated statement list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Statement"
+
+  /pulse-api/v1/compliance/export:
+    post:
+      operationId: exportComplianceData
+      summary: Export compliance data for a given period and scope
+      tags: [Reporting]
+      x-required-scopes: [reporting:compliance]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplianceExport"
+      responses:
+        "202":
+          description: Compliance export accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplianceExport"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /pulse-api/v1/analytics:
+    get:
+      operationId: getAnalytics
+      summary: Retrieve aggregated payment analytics and metrics
+      tags: [Reporting]
+      x-required-scopes: [reporting:read]
+      parameters:
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: period_start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: period_end
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [hourly, daily, weekly, monthly]
+            default: daily
+      responses:
+        "200":
+          description: Analytics response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsResponse"
+
+  # ───────────────────────────── Fee Management Routes (2) ─────────────────────────────
+
+  /pulse-api/v1/fee-policies:
+    get:
+      operationId: listFeePolicies
+      summary: List fee policies
+      tags: [Fees]
+      x-required-scopes: [fees:read]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PerPageParam"
+        - name: active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Fee policies list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/FeePolicy"
+    post:
+      operationId: createFeePolicy
+      summary: Create a new fee policy
+      tags: [Fees]
+      x-required-scopes: [fees:write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeePolicy"
+      responses:
+        "201":
+          description: Fee policy created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeePolicy"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
