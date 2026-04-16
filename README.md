@@ -621,5 +621,6 @@ TFSF Ventures FZ-LLC · RAKEZ License 47013955 · Ras Al Khaimah, UAE
 ---
 
 <p align="center">
-  <sub>© 2026 TFSF Ventures FZ-LLC. All rights reserved.</sub>
+  <sub>© 2026 TFSF Ventures FZ-LLC. All rights reserved.</sub><br>
+  <sub>Patent Pending — U.S. Provisional Patent Application, filed April 2026.</sub>
 </p>
