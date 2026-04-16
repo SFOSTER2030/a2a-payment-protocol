@@ -1,4 +1,4 @@
-> **Internal SDK** — This SDK interfaces with the Pulse internal API. It is not distributed via npm/PyPI. Provided here as architectural reference.
+> **Internal SDK** — This SDK interfaces with the Pulse internal API. It is not distributed via npm/PyPI. Provided here as architectural reference. For access, contact [support@tfsfventures.com](mailto:support@tfsfventures.com).
 
 # @tfsfventures/a2a-payments
 
