@@ -10,8 +10,8 @@ info:
     name: TFSF Ventures Support
     email: support@tfsfventures.com
   license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
+    name: Proprietary
+    url: https://github.com/SFOSTER2030/a2a-payment-protocol/blob/main/LICENSE
 
 servers:
   - url: https://{your-instance}.pulse-internal/api

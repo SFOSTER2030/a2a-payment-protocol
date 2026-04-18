@@ -253,4 +253,4 @@ All response objects are Python dataclasses. Enums use `str` bases for easy seri
 
 ## License
 
-Apache-2.0
+Proprietary — Copyright 2026 TFSF Ventures FZ-LLC. All rights reserved. See [LICENSE](../../LICENSE) for full terms.

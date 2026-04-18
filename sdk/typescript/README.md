@@ -341,4 +341,4 @@ import {
 
 ## License
 
-Apache-2.0
+Proprietary — Copyright 2026 TFSF Ventures FZ-LLC. All rights reserved. See [LICENSE](../../LICENSE) for full terms.
