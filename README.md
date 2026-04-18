@@ -513,7 +513,7 @@ Full documentation: [TypeScript SDK](sdk/typescript/README.md) · [Python SDK](s
 ```
 a2a-payment-protocol/
 ├── README.md
-├── LICENSE                                    ← Apache 2.0
+├── LICENSE                                    ← Proprietary — All Rights Reserved
 ├── SECURITY.md                                ← Vulnerability reporting
 ├── CONTRIBUTING.md                            ← Protocol contributions
 ├── index.html                                 ← White paper (a2a.tfsfventures.com)
@@ -606,7 +606,11 @@ Found a vulnerability? See [SECURITY.md](SECURITY.md) for responsible disclosure
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE) for details.
+**Proprietary — All Rights Reserved.**
+
+Copyright 2026 TFSF Ventures FZ-LLC. All rights reserved. This specification is published for reference and evaluation purposes only. No commercial use, implementation, or creation of derivative works is permitted without a written license agreement from TFSF Ventures FZ-LLC. Patent pending in 11 jurisdictions.
+
+See [LICENSE](LICENSE) for full terms. For licensing inquiries, contact [support@tfsfventures.com](mailto:support@tfsfventures.com).
 
 ---
 
